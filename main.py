@@ -22,8 +22,8 @@ def get_mesh(opt):
 
 def get_camera_position(opt, mesh):
     screen_size = mesh.extents.max()
-    znear = 0.05
-    depth_size = 255 / opt.depth_per_unit
+    znear = 0.001
+    depth_size = mesh.extents[2] / (254/255*opt.depth_range+1/255)
     zfar = depth_size + znear
 
     cam_pose = np.eye(4)
@@ -99,18 +99,24 @@ def get_args():
     parser.add_argument('--model', default='./models/logotype_toon.obj', help='path to 3d model.')
     parser.add_argument('--image_size', type=int, default=1024, help='size of rendered depth')
     parser.add_argument('--inverse_depth', action='store_true', help='closer objects have higher depth value')
-    parser.add_argument('--scale', type=float, default=1.0, help='scale of logotype size. Value is from interval (0, 1]')
-    parser.add_argument('--x_shift', type=float, default=0.0, help='shift logotype along x axis. Value is from interval [-1, 1]')
-    parser.add_argument('--y_shift', type=float, default=0.0, help='shift logotype along y axis. Value is from interval [-1, 1]')
-    parser.add_argument('--z_shift', type=float, default=0.0, help='shift logotype along z axis. Value is from interval [0, 1]')
+    parser.add_argument('--scale', type=float, default=1.0, help='scale of logotype size. Interval is (0, 1]')
+    parser.add_argument('--x_shift', type=float, default=0.0, help='shift logotype along x axis. Interval is [-1, 1]')
+    parser.add_argument('--y_shift', type=float, default=0.0, help='shift logotype along y axis. Interval is [-1, 1]')
+    parser.add_argument('--z_shift', type=float, default=0.0, help='shift logotype along z axis. Interval is [0, 1]')
     parser.add_argument('--x_angle', type=float, default=0.0, help='rotation angle along x axis. Unit is radian.')
     parser.add_argument('--y_angle', type=float, default=0.0, help='rotation angle along y axis. Unit is radian.')
     parser.add_argument('--z_angle', type=float, default=0.0, help='rotation angle along z axis. Unit is radian.')
-    parser.add_argument('--depth_per_unit', type=float, default=50.0, help='depth resolution per unit of space')
+    parser.add_argument('--depth_range', type=float, default=0.5, help='depth range. Interval is [0, 1], where 1 equals model depth and 0 means model depth is indistinguishable.')
 
     return parser.parse_args()
 
+def debug_args():
+    argv = '--x_angle 0.25 --y_angle 0.15 --inverse_depth --model models/PhotoLab.obj --scale 0.5 --depth_range 0.7'
+    argv = argv.split()
+    sys.argv.extend(argv)
+
 if __name__ == '__main__':
+    #debug_args()
     args = get_args()
     depth = render(args)
     
@@ -118,5 +124,5 @@ if __name__ == '__main__':
 
     model_name = os.path.splitext(os.path.basename(args.model))[0]
     name = f'{model_name}_{args.image_size}_{args.scale}_{args.x_shift}_{args.y_shift}_{args.z_shift}_' \
-    f'{args.x_angle}_{args.y_angle}_{args.z_angle}_{args.depth_per_unit}_{args.inverse_depth}.png'
+    f'{args.x_angle}_{args.y_angle}_{args.z_angle}_{args.depth_range}_{args.inverse_depth}.png'
     cv2.imwrite(os.path.join(args.save_folder, name), depth)
