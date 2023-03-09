@@ -23,7 +23,7 @@ def get_mesh(opt):
 def get_camera_position(opt, mesh):
     screen_size = mesh.extents.max()
     znear = 0.05
-    depth_size = mesh.extents[2]
+    depth_size = 255 / opt.depth_per_unit
     zfar = depth_size + znear
 
     cam_pose = np.eye(4)
@@ -82,7 +82,7 @@ def render(opt):
     _ = r.render(scene, flags=pyrender.RenderFlags.SKIP_CULL_FACES | pyrender.RenderFlags.DEPTH_ONLY)
 
     # pyrender lib has a bug in getting linear depth with OrthographicCamera projection.
-    # fixed that with custom depth buffer reading function
+    # fixed it with depth buffer reading function
     depth = read_depth(r._renderer, scene)
 
     if opt.inverse_depth:
@@ -96,9 +96,9 @@ def render(opt):
 def get_args():
     parser = argparse.ArgumentParser('OpenGL render')
     parser.add_argument('--save_folder', default='./output', help='results saving path')
-    parser.add_argument('--model', default='./models/logotype_toon.obj', help='path to 3d model')
+    parser.add_argument('--model', default='./models/logotype_toon.obj', help='path to 3d model.')
     parser.add_argument('--image_size', type=int, default=1024, help='size of rendered depth')
-    parser.add_argument('--inverse_depth', action='store_true', help='0 value is far, 255 is close')
+    parser.add_argument('--inverse_depth', action='store_true', help='closer objects have higher depth value')
     parser.add_argument('--scale', type=float, default=1.0, help='scale of logotype size. Value is from interval (0, 1]')
     parser.add_argument('--x_shift', type=float, default=0.0, help='shift logotype along x axis. Value is from interval [-1, 1]')
     parser.add_argument('--y_shift', type=float, default=0.0, help='shift logotype along y axis. Value is from interval [-1, 1]')
@@ -106,7 +106,7 @@ def get_args():
     parser.add_argument('--x_angle', type=float, default=0.0, help='rotation angle along x axis. Unit is radian.')
     parser.add_argument('--y_angle', type=float, default=0.0, help='rotation angle along y axis. Unit is radian.')
     parser.add_argument('--z_angle', type=float, default=0.0, help='rotation angle along z axis. Unit is radian.')
-    parser.add_argument('--depth_range', type=float, default=100.0, help='depth value per unit of space')
+    parser.add_argument('--depth_per_unit', type=float, default=50.0, help='depth resolution per unit of space')
 
     return parser.parse_args()
 
@@ -118,5 +118,5 @@ if __name__ == '__main__':
 
     model_name = os.path.splitext(os.path.basename(args.model))[0]
     name = f'{model_name}_{args.image_size}_{args.scale}_{args.x_shift}_{args.y_shift}_{args.z_shift}_' \
-    f'{args.x_angle}_{args.y_angle}_{args.z_angle}_{args.depth_range}_{args.inverse_depth}.png'
+    f'{args.x_angle}_{args.y_angle}_{args.z_angle}_{args.depth_per_unit}_{args.inverse_depth}.png'
     cv2.imwrite(os.path.join(args.save_folder, name), depth)

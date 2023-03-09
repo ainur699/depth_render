@@ -2,5 +2,5 @@
 
 ### Get depth of logotype
 ```
-python ./main.py --inverse_depth
+python ./main.py --x_angle 0.5 --y_angle 0.4 --inverse_depth
 ```
